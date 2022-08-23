@@ -1,6 +1,5 @@
 const process = require('node:process');
 
-
 const callbacks = new Set();
 let isCalled = false;
 let isRegistered = false;
@@ -13,7 +12,7 @@ async function exit(shouldManuallyExit, signal) {
 	isCalled = true;
 
 	for (const callback of callbacks) {
-		await callback();
+		await callback(signal);
 	}
 
 	if (shouldManuallyExit === true) {
@@ -21,7 +20,19 @@ async function exit(shouldManuallyExit, signal) {
 	}
 }
 
-module.exports =  function exitHook(onExit) {
+module.exports = function exitHook(onExit, options) {
+	if ('function' !== typeof onExit) {
+		throw new Error(
+			'A callback function must be passed as the first argument.'
+		);
+	}
+	
+	let ignoreSignals = 'object' == typeof options.ignore ? options.ignore : [];
+	ignoreSignals = Array.isArray(ignoreSignals)
+		? ignoreSignals
+		: [ignoreSignals];
+	ignoreSignals = ignoreSignals.map((s) => s.toUpperCase());
+
 	callbacks.add(onExit);
 
 	if (!isRegistered) {
@@ -29,10 +40,11 @@ module.exports =  function exitHook(onExit) {
 
 		process.once('exit', exit);
 
-        for(let signal of require("./signals")){
-            process.once(signal, exit.bind(undefined, true));
-        }
-		
+		for (let signal of require('./signals')) {
+			if (ignoreSignals.indexOf(signal) == -1) {
+				process.once(signal, exit.bind(undefined, signal));
+			}
+		}
 
 		// PM2 Cluster shutdown message. Caught to support async handlers with pm2, needed because
 		// explicitly calling process.exit() doesn't trigger the beforeExit event, and the exit
@@ -47,4 +59,4 @@ module.exports =  function exitHook(onExit) {
 	return () => {
 		callbacks.delete(onExit);
 	};
-}
+};
