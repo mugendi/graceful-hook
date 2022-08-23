@@ -1,6 +1,6 @@
 {
 	"name": "graceful-hook",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Gracefully exit process while waiting for all services to finish.",
 	"main": "index.js",
 	"scripts": {
