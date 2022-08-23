@@ -21,6 +21,25 @@ async function exit(shouldManuallyExit, signal, signalNum) {
 	}
 }
 
+function format_options(options) {
+	// must be an object
+	options = 'object' == typeof options ? options : {};
+
+	// format ignore
+	options.ignore = options.ignore || [];
+
+	// ensure ignore is array
+	options.ignore = Array.isArray(options.ignore)
+		? options.ignore
+		: options.ignore
+		? [options.ignore]
+		: [];
+	// ensure signal names are capitalized
+	options.ignore = options.ignore.map((s) => s.toUpperCase());
+
+	return options;
+}
+
 module.exports = function exitHook(onExit, options) {
 	if ('function' !== typeof onExit) {
 		throw new Error(
@@ -28,11 +47,8 @@ module.exports = function exitHook(onExit, options) {
 		);
 	}
 
-	let ignoreSignals = 'object' == typeof options.ignore ? options.ignore : [];
-	ignoreSignals = Array.isArray(ignoreSignals)
-		? ignoreSignals
-		: [ignoreSignals];
-	ignoreSignals = ignoreSignals.map((s) => s.toUpperCase());
+	//format options
+	options = format_options(options);
 
 	callbacks.add(onExit);
 
@@ -42,7 +58,7 @@ module.exports = function exitHook(onExit, options) {
 		process.once('exit', exit.bind(undefined, false, 'exit', 0));
 
 		for (let signal of signals) {
-			if (ignoreSignals.indexOf(signal) == -1) {
+			if (options.ignore.indexOf(signal) == -1) {
 				// console.info(signal, signalNumbers[signal] || 0);
 				process.once(
 					signal,
