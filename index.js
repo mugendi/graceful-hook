@@ -1,10 +1,11 @@
 const process = require('node:process');
+const { signals, signalNumbers } = require('./signals');
 
 const callbacks = new Set();
 let isCalled = false;
 let isRegistered = false;
 
-async function exit(shouldManuallyExit, signal) {
+async function exit(shouldManuallyExit, signal, signalNum) {
 	if (isCalled) {
 		return;
 	}
@@ -12,11 +13,11 @@ async function exit(shouldManuallyExit, signal) {
 	isCalled = true;
 
 	for (const callback of callbacks) {
-		await callback(signal);
+		await callback(signal, signalNum);
 	}
 
 	if (shouldManuallyExit === true) {
-		process.exit(128 + signal); // eslint-disable-line unicorn/no-process-exit
+		process.exit(128 + signalNum); // eslint-disable-line unicorn/no-process-exit
 	}
 }
 
@@ -26,7 +27,7 @@ module.exports = function exitHook(onExit, options) {
 			'A callback function must be passed as the first argument.'
 		);
 	}
-	
+
 	let ignoreSignals = 'object' == typeof options.ignore ? options.ignore : [];
 	ignoreSignals = Array.isArray(ignoreSignals)
 		? ignoreSignals
@@ -38,11 +39,20 @@ module.exports = function exitHook(onExit, options) {
 	if (!isRegistered) {
 		isRegistered = true;
 
-		process.once('exit', exit);
+		process.once('exit', exit.bind(undefined, false, 'exit', 0));
 
-		for (let signal of require('./signals')) {
+		for (let signal of signals) {
 			if (ignoreSignals.indexOf(signal) == -1) {
-				process.once(signal, exit.bind(undefined, signal));
+				// console.info(signal, signalNumbers[signal] || 0);
+				process.once(
+					signal,
+					exit.bind(
+						undefined,
+						false,
+						signal,
+						signalNumbers[signal] || 0
+					)
+				);
 			}
 		}
 
@@ -51,7 +61,7 @@ module.exports = function exitHook(onExit, options) {
 		// event cannot support async handlers, since the event loop is never called after it.
 		process.on('message', (message) => {
 			if (message === 'shutdown') {
-				exit(true, -128);
+				exit(true, null, -128);
 			}
 		});
 	}

@@ -10,7 +10,7 @@ This module is thus *the best of both worlds*.
 
 Here are some of the things it does differently:
 - Returns the signal to callback function unlike **exit-hook**
-- Handles async callbacks, including waiting for them to resolve unlike **exit-hook** and **signal-exit**
+- Tries to handle async callbacks, including waiting for them to resolve
 - Includes all the signals that are handled by **signal-exit** and not **exit-hook**
 - Handles pm2 shutdown messages as handled by **exit-hook** and not **signal-exit**
 - Adds an ```ignore``` option to ensure certain signals can be ignored. This fine grained signal handling is important to ensure the hook plays well with tools like **Nodemon**. 
@@ -29,7 +29,7 @@ $ npm install graceful-hook
 const gracefulHook = require('graceful-hook');
 
 // Hook with option to ignore some signals
-gracefulHook(async (signal) => {
+gracefulHook(async (signal, signalNum) => {
 	console.log(`${signal} received`);
 	console.log('Exiting with after some async process...');
 

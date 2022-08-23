@@ -18,37 +18,49 @@
 // artificially, inherently leave the process in a
 // state from which it is not safe to try and enter JS
 // listeners.
-module.exports = [
-    'SIGABRT',
-    'SIGALRM',
-    'SIGHUP',
-    'SIGINT',
-    'SIGTERM'
-  ]
-  
-  if (process.platform !== 'win32') {
-    module.exports.push(
-      'SIGVTALRM',
-      'SIGXCPU',
-      'SIGXFSZ',
-      'SIGUSR2',
-      'SIGTRAP',
-      'SIGSYS',
-      'SIGQUIT',
-      'SIGIOT'
-      // should detect profiler and enable/disable accordingly.
-      // see #21
-      // 'SIGPROF'
-    )
-  }
-  
-  if (process.platform === 'linux') {
-    module.exports.push(
-      'SIGIO',
-      'SIGPOLL',
-      'SIGPWR',
-      'SIGSTKFLT',
-      'SIGUNUSED'
-    )
-  }
-  
+
+// source: https://chromium.googlesource.com/chromiumos/docs/+/master/constants/signals.md
+let signalNumbers = {
+	SIGABRT: 6,
+	SIGALRM: 14,
+	SIGHUP: 1,
+	SIGINT: 2,
+	SIGTERM: 15,
+	SIGVTALRM: 26,
+	SIGXCPU: 24,
+	SIGXFSZ: 25,
+	SIGUSR2: 12,
+	SIGTRAP: 5,
+	SIGSYS: 31,
+	SIGQUIT: 3,
+	SIGIOT: 6,
+	SIGIO: 29,
+	SIGPOLL: 29,
+	SIGPWR: 30,
+	SIGSTKFLT: 16,
+	SIGUNUSED: 31, //see: http://dictionary.sensagent.com/SIGUNUSED/en-en/
+};
+
+let signals = ['SIGABRT', 'SIGALRM', 'SIGHUP', 'SIGINT', 'SIGTERM'];
+
+if (process.platform !== 'win32') {
+	signals.push(
+		'SIGVTALRM',
+		'SIGXCPU',
+		'SIGXFSZ',
+		'SIGUSR2',
+		'SIGTRAP',
+		'SIGSYS',
+		'SIGQUIT',
+		'SIGIOT'
+		// should detect profiler and enable/disable accordingly.
+		// see #21
+		// 'SIGPROF'
+	);
+}
+
+if (process.platform === 'linux') {
+	signals.push('SIGIO', 'SIGPOLL', 'SIGPWR', 'SIGSTKFLT', 'SIGUNUSED');
+}
+
+module.exports = { signals, signalNumbers };
